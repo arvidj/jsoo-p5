@@ -17,6 +17,4 @@
  (name p5)
  (synopsis "Js_of_ocaml bindings for p5.js")
  (description "Js_of_ocaml bindings for p5.js using the library brr")
- (depends
-   js_of_ocaml
-   brr))
+ (depends js_of_ocaml js_of_ocaml-lwt js_of_ocaml-ppx js_of_ocaml-tyxml brr))

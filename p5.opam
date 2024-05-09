@@ -10,6 +10,9 @@ bug-reports: "https://github.com/patricoferris/jsoo-p5/issues"
 depends: [
   "dune" {>= "2.7"}
   "js_of_ocaml"
+  "js_of_ocaml-lwt"
+  "js_of_ocaml-ppx"
+  "js_of_ocaml-tyxml"
   "brr"
   "odoc" {with-doc}
 ]
