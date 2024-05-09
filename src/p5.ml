@@ -4,3 +4,4 @@ module Shape = Shape
 module Math = Math
 module Color = Color
 module Image = Image
+module Text = Text
