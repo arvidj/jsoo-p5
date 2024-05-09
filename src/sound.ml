@@ -13,7 +13,9 @@ module AudioIn = struct
   let start audio_in fn =
     Jv.call audio_in "start"  [| Jv.repr fn |] |> ignore
 
-  let stream audio_in =
+  type stream  = Jv.t
+
+  let stream audio_in : stream =
     Jv.get audio_in "stream"
 
   let get_level ?smoothing audio_in =
