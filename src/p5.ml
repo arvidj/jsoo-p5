@@ -7,3 +7,4 @@ module Image = Image
 module Text = Text
 
 module Sound = Sound
+module Time = Time
