@@ -83,6 +83,9 @@ let no_fill ?sketch () = Sketch.call sketch "noFill" [||] |> ignore
 
 let stroke ?sketch t = Sketch.call sketch "stroke" [| t |] |> ignore
 
+let stroke_weight ?sketch weight =
+  Sketch.call sketch "strokeWeight" [| Jv.of_int weight |] |> ignore
+
 let no_stroke ?sketch () = Sketch.call sketch "noStroke" [||] |> ignore
 
 let erase ?sketch ?fill_strength ?stroke_strength () =

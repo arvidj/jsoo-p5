@@ -103,6 +103,9 @@ val no_fill : ?sketch:Sketch.t -> unit -> unit
 val stroke : ?sketch:Sketch.t -> t -> unit
 (** [stroke c] sets the colour used to draw lines and borders around shapes *)
 
+val stroke_weight : ?sketch:Sketch.t -> int -> unit
+(** [stroke_weight ()] sets the stroke weight *)
+
 val no_stroke : ?sketch:Sketch.t -> unit -> unit
 (** [no_stroke ()] disables drawing the outline *)
 
