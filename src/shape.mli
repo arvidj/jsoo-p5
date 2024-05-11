@@ -1,5 +1,9 @@
 (** {2 Two Dimensional Primitives} *)
 
+type rect_mode = Center
+
+val rect_mode : ?sketch:Sketch.t -> rect_mode -> unit
+
 val rect :
   ?sketch:Sketch.t ->
   ?tl:float ->

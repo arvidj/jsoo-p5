@@ -1,3 +1,10 @@
+type rect_mode = Center
+
+let rect_mode ?sketch rect_mode =
+  Sketch.call sketch "rectMode"
+    [| Sketch.get None (match rect_mode with Center -> "CENTER") |]
+  |> ignore
+
 let rect ?sketch ?tl ?tr ?br ?bl x y w h =
   let x = Jv.of_float x in
   let y = Jv.of_float y in
