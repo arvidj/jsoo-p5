@@ -183,7 +183,7 @@ let draw () =
           align ~vert_align:Center Center;
           set_size 24;
           draw
-            ("got: " ^ closest_note.note)
+            ("got: " ^ Note.to_string_pretty closest_note)
             ~x:(width /. 2.0) ~y:(height -. 100.0))
       in
       (* Print the target note *)
@@ -191,7 +191,9 @@ let draw () =
         Color.fill (C.white ());
         Text.(
           set_size 64;
-          draw ("tgt: " ^ target.note) ~x:(width /. 2.0) ~y:(height -. 50.0))
+          draw
+            ("tgt: " ^ Note.to_string_pretty target)
+            ~x:(width /. 2.0) ~y:(height -. 50.0))
       in
       (* Draw frequency gauge *)
       let () =

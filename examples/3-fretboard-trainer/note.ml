@@ -1,5 +1,25 @@
 type t = { note : string; frequency : float }
 
+let to_string_pretty { note; _ } =
+  let buf = Buffer.create (String.length note) in
+  Fun.flip String.iter note (fun c ->
+      Buffer.add_string buf
+        (match c with
+        | '0' -> "₀"
+        | '1' -> "₁"
+        | '2' -> "₂"
+        | '3' -> "₃"
+        | '4' -> "₄"
+        | '5' -> "₅"
+        | '6' -> "₆"
+        | '7' -> "₇"
+        | '8' -> "₈"
+        | '9' -> "₉"
+        | '#' -> "♯"
+        | 'b' -> "♭"
+        | c -> String.make 1 c));
+  Buffer.contents buf
+
 let notes =
   [|
     { note = "E2"; frequency = 82.41 };
