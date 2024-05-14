@@ -37,8 +37,7 @@ let notes =
     { note = "E3"; frequency = 164.81 };
   |]
 
-let diff f1 f2 =
-  Float.abs (f1.frequency -. f2.frequency)
+let diff f1 f2 = Float.abs (f1.frequency -. f2.frequency)
 
 let closest frequency =
   let closest = ref notes.(0) in
@@ -55,3 +54,8 @@ let rec random ?unlike () =
   match unlike with
   | Some unlike when note = unlike -> random ~unlike ()
   | _ -> note
+
+(* let learning_order = *)
+(*   (\* First all the full notes on the first string. *\) *)
+(*   (\* Then all flats and shares on the first string. *\) *)
+(*   assert false *)

@@ -7,6 +7,26 @@ open P5
   - [ ] Add a timer for 3 minutes sessions (present final average)
   - [ ] Detect errors
 
+A simple model for increasing the set of notes trained on:
+
+Define a ordering on the notes (the order in which they shall be learned):
+ - notes[0] .. notes[6*13 - 1]
+such that notes[0] is the first note to learn.
+
+Let learnt : int be the index of the last note which is not yet learnt.
+
+Let avg_score[i] be the avg_score of the ith note.
+ - This can be defined as the weighted moving average of the last set of scores for that note
+
+Let repeats[i] be the number of times the ith note has been repeated.
+
+After each repeat of note j with scores:
+  repeats[j]++
+  update avg_score[j]
+
+  if for all i in 0 .. i: repeats[i] >= repeat_threshold && avg_score[i] >= score_threshold:
+    learnt++
+
 *)
 
 let dbg fmt = Printf.ksprintf (fun s -> Brr.Console.(debug [ str s ])) fmt
@@ -18,7 +38,7 @@ type config = {
 }
 
 let config =
-  { mic_threshold = 0.0010; freq_threshold = 1.5; sustain_treshold = 200 }
+  { mic_threshold = 0.0010; freq_threshold = 3.0; sustain_treshold = 50 }
 
 module C = struct
   let black () = Color.make_string "black"
@@ -75,23 +95,22 @@ let setup () =
         Brr.Console.(error [ str "[got_pitch] error"; err ]) |> ignore
     | Ok frequency_opt ->
         (match frequency_opt with
-        | Some frequency ->
-(*             dbg "Frequency: %f" frequency; *)
+        | Some frequency -> (
+            (*             dbg "Frequency: %f" frequency; *)
             let level = Sound.AudioIn.get_level mic in
             let sound = { frequency; level } in
-            (match !state with
-            | Loading -> 
-               state :=
-                 Listening
-                   {
-                     sound;
-                     target = Note.random ();
-                     target_start = Time.millis ();
-                     sustain = None;
-                     scores = [];
-                   }
-            | Listening state ->
-               state.sound <- sound)
+            match !state with
+            | Loading ->
+                state :=
+                  Listening
+                    {
+                      sound;
+                      target = Note.random ();
+                      target_start = Time.millis ();
+                      sustain = None;
+                      scores = [];
+                    }
+            | Listening state -> state.sound <- sound)
         | None -> ());
         pitch_detection got_pitch
   in
@@ -111,16 +130,11 @@ let draw () =
         draw "Loading..." ~x:(width /. 2.0) ~y:(height /. 2.0));
       ()
   | Listening
-      ({
-         sound = { frequency; level };
-         target;
-         target_start;
-         sustain;
-         scores;
-       } as state) ->
+      ({ sound = { frequency; level }; target; target_start; sustain; scores }
+       as state) ->
       let next_note () =
         let score = now - target_start - config.sustain_treshold in
-        let scores = score :: scores in 
+        let scores = score :: scores in
         let avg =
           let sum = List.fold_left ( + ) 0 scores in
           let length = List.length scores in
@@ -130,7 +144,7 @@ let draw () =
         state.scores <- scores;
         state.target <- Note.random ~unlike:target ();
         state.target_start <- now;
-        state.sustain <- None;
+        state.sustain <- None
       in
       (* Do nothing if too quiet *)
       Color.background (C.black ());
@@ -155,7 +169,7 @@ let draw () =
       | None -> ()
       | Some start ->
           let hold = now - start in
-(*           dbg "sustain.hold: %d" hold; *)
+          (*           dbg "sustain.hold: %d" hold; *)
           Color.fill (C.white ());
           Text.(
             align ~vert_align:Center Center;

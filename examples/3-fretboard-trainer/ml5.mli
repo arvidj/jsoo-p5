@@ -7,7 +7,4 @@ val pitch_detection :
   (unit -> unit) ->
   pitch_detection
 
-val get_pitch :
-  pitch_detection ->
-  ((float option, Jv.t) result -> unit) ->
-  unit
+val get_pitch : pitch_detection -> ((float option, Jv.t) result -> unit) -> unit
