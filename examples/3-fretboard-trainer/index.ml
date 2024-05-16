@@ -61,12 +61,14 @@ type state =
       mutable target_start : int;
       mutable sustain : int option;
       mutable scores : int list;
+      mutable synth : Sound.MonoSynth.t;
     }
 
 let state : state ref = ref Loading
 
 let setup () =
   Canvas.create 400 600 |> ignore;
+  let synth = Sound.MonoSynth.make () in
   let audio_context = Sound.get_audio_context () in
   let mic = Sound.AudioIn.make () in
   Sound.AudioIn.start mic @@ fun () ->
@@ -101,6 +103,8 @@ let setup () =
             let sound = { frequency; level } in
             match !state with
             | Loading ->
+                (* The game starts *)
+                Sound.MonoSynth.play synth "E4";
                 state :=
                   Listening
                     {
@@ -109,6 +113,7 @@ let setup () =
                       target_start = Time.millis ();
                       sustain = None;
                       scores = [];
+                      synth;
                     }
             | Listening state -> state.sound <- sound)
         | None -> ());
@@ -130,9 +135,22 @@ let draw () =
         draw "Loading..." ~x:(width /. 2.0) ~y:(height /. 2.0));
       ()
   | Listening
-      ({ sound = { frequency; level }; target; target_start; sustain; scores }
-       as state) ->
+      ({
+         sound = { frequency; level };
+         target;
+         target_start;
+         sustain;
+         scores;
+         synth;
+       } as state) ->
       let next_note () =
+        dbg "nice!";
+        (* TODO: we should probably stop listening while this sound
+           plays (it plays during it's [sustain_time] which defaults
+           to 0.15s).  Perhaps we can set the amp to 0 on the mic, or
+           just change the code so that detected frequencies are
+           ignored during this time. *)
+        Sound.MonoSynth.play synth "Gb4";
         let score = now - target_start - config.sustain_treshold in
         let scores = score :: scores in
         let avg =
@@ -175,9 +193,7 @@ let draw () =
             align ~vert_align:Center Center;
             set_size 24;
             draw (string_of_int hold) ~x:(width /. 2.0) ~y:(height -. 200.0));
-          if hold >= config.sustain_treshold then (
-            dbg "nice!";
-            next_note ()));
+          if hold >= config.sustain_treshold then next_note ());
       (* Print the frequency *)
       let () =
         Color.fill (C.white ());
@@ -189,8 +205,8 @@ let draw () =
             ~x:(width /. 2.0) ~y:(height -. 150.0))
       in
       (* Print the closest note *)
-      let closest_note = Note.closest frequency in
       let () =
+        let closest_note = Note.closest frequency in
         Color.fill
         @@ if Option.is_some state.sustain then C.green () else C.white ();
         Text.(
