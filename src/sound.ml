@@ -26,3 +26,22 @@ type audio_context = Jv.t
 
 let get_audio_context ?sketch () : audio_context =
   Sketch.call sketch "getAudioContext" [||]
+
+module MonoSynth = struct
+  type t = Jv.t
+
+  let make () =
+    let p5 = Jv.get (Window.to_jv G.window) "p5" in
+    let mono_synth = Jv.get p5 "MonoSynth" in
+    Jv.new' mono_synth [||]
+
+  let play ?velocity ?seconds_from_now ?sustain_time synth note =
+    Jv.call synth "play"
+      [|
+        Jv.of_string note;
+        Jv.of_option ~none:Jv.null Jv.of_float velocity;
+        Jv.of_option ~none:Jv.null Jv.of_float seconds_from_now;
+        Jv.of_option ~none:Jv.null Jv.of_float sustain_time;
+      |]
+    |> ignore
+end
