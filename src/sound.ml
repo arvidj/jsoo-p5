@@ -12,6 +12,7 @@ module AudioIn = struct
     Jv.new' audio_in [||]
 
   let start audio_in fn = Jv.call audio_in "start" [| Jv.repr fn |] |> ignore
+  let stop audio_in = Jv.call audio_in "stop" [||] |> ignore
 
   type stream = Jv.t
 
