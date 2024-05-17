@@ -23,3 +23,5 @@ val with_sketch : ?id:string -> (t -> unit) -> unit
 (** [with_sketch ?id fn] allows you to run p5.js in instance mode by providing
     you with a sketch object. The [id] can optionally specify the id of the
     parent container where the canvas will be created. *)
+
+val no_loop : ?sketch:t -> unit -> unit
