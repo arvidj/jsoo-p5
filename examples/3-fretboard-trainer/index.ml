@@ -30,15 +30,22 @@ After each repeat of note j with scores:
 *)
 
 let dbg fmt = Printf.ksprintf (fun s -> Brr.Console.(debug [ str s ])) fmt
+let sf = Printf.sprintf
 
 type config = {
   mic_threshold : float;
   freq_threshold : float;
-  sustain_treshold : int;
+  sustain_treshold : int; (* Time of each game in milliseconds *)
+  session_time : int;
 }
 
 let config =
-  { mic_threshold = 0.0010; freq_threshold = 3.0; sustain_treshold = 50 }
+  {
+    mic_threshold = 0.0010;
+    freq_threshold = 3.0;
+    sustain_treshold = 50;
+    session_time = 180 * 1000;
+  }
 
 module C = struct
   let black () = Color.make_string "black"
@@ -53,16 +60,31 @@ let model_url =
 
 type sound = { frequency : float; level : float }
 
+module Scores = struct
+  type t = int list
+
+  let average scores =
+    let sum = List.fold_left ( + ) 0 scores in
+    let length = List.length scores in
+    float_of_int sum /. float_of_int length
+
+  let add scores score = score :: scores
+  let empty = []
+  let length = List.length
+end
+
 type state =
   | Loading
   | Listening of {
+      synth : Sound.MonoSynth.t;
+      game_start : int;
       mutable sound : sound;
       mutable target : Note.t;
       mutable target_start : int;
       mutable sustain : int option;
-      mutable scores : int list;
-      mutable synth : Sound.MonoSynth.t;
+      mutable scores : Scores.t;
     }
+  | End_screen of { scores : Scores.t }
 
 let state : state ref = ref Loading
 
@@ -105,17 +127,20 @@ let setup () =
             | Loading ->
                 (* The game starts *)
                 Sound.MonoSynth.play synth "E4";
+                let now = Time.millis () in
                 state :=
                   Listening
                     {
+                      synth;
+                      game_start = now;
                       sound;
                       target = Note.random ();
-                      target_start = Time.millis ();
+                      target_start = now;
                       sustain = None;
-                      scores = [];
-                      synth;
+                      scores = Scores.empty;
                     }
-            | Listening state -> state.sound <- sound)
+            | Listening state -> state.sound <- sound
+            | End_screen _ -> ())
         | None -> ());
         pitch_detection got_pitch
   in
@@ -137,12 +162,14 @@ let draw () =
   | Listening
       ({
          sound = { frequency; level };
+         game_start;
          target;
          target_start;
          sustain;
          scores;
          synth;
-       } as state) ->
+       } as state)
+    when now - game_start < config.session_time ->
       let next_note () =
         dbg "nice!";
         (* TODO: we should probably stop listening while this sound
@@ -152,12 +179,8 @@ let draw () =
            ignored during this time. *)
         Sound.MonoSynth.play synth "Gb4";
         let score = now - target_start - config.sustain_treshold in
-        let scores = score :: scores in
-        let avg =
-          let sum = List.fold_left ( + ) 0 scores in
-          let length = List.length scores in
-          float_of_int sum /. float_of_int length
-        in
+        let scores = Scores.add scores score in
+        let avg = Scores.average scores in
         dbg "score: %d (avg: %f)" score avg;
         state.scores <- scores;
         state.target <- Note.random ~unlike:target ();
@@ -243,5 +266,35 @@ let draw () =
         Shape.rect (200.0 +. (freq_diff /. 2.0)) 100.0 10.0 75.0
       in
       ()
+  | Listening { scores; synth; _ } ->
+      Sound.MonoSynth.play synth "C4";
+      state := End_screen { scores }
+  | End_screen { scores } ->
+      let len_scores = Scores.length scores in
+      let average =
+        if len_scores > 0 then
+          Scores.(average scores /. 1000.) |> string_of_float
+        else "-"
+      in
+      (* Print the average score *)
+      let () =
+        Color.background (C.black ());
+        Color.fill (C.white ());
+        Text.(
+          align ~vert_align:Center Center;
+          set_size 32;
+          draw
+            (sf "Average score: %s" average)
+            ~x:(width /. 2.0)
+            ~y:((height /. 2.0) -. 25.);
+          set_size 24;
+          draw
+            (sf "Notes played: %d" len_scores)
+            ~x:(width /. 2.0)
+            ~y:((height /. 2.0) +. 25.));
+        ()
+      in
+      (* Stop calling draw *)
+      Sketch.no_loop ()
 
 let () = Sketch.run ~setup ~draw ()
