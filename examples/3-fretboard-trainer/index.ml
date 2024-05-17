@@ -87,6 +87,8 @@ type state =
   | End_screen of { scores : Scores.t }
 
 let state : state ref = ref Loading
+let teardown : (unit -> unit) list ref = ref []
+let register_teardown fn = teardown := fn :: !teardown
 
 let setup () =
   Canvas.create 400 600 |> ignore;
@@ -95,6 +97,9 @@ let setup () =
   let mic = Sound.AudioIn.make () in
   Sound.AudioIn.start mic @@ fun () ->
   dbg "Listening";
+  register_teardown (fun () ->
+      dbg "Stopping mic";
+      Sound.AudioIn.stop mic);
   let stream = Sound.AudioIn.stream mic in
   let pitch_detection =
     let pitch_detection = ref None in
@@ -294,6 +299,8 @@ let draw () =
             ~y:((height /. 2.0) +. 25.));
         ()
       in
+      (* Call teardown functions *)
+      List.iter (fun f -> f ()) !teardown;
       (* Stop calling draw *)
       Sketch.no_loop ()
 
